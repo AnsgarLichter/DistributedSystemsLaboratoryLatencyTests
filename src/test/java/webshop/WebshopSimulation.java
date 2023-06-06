@@ -8,7 +8,7 @@ import io.gatling.javaapi.http.*;
 
 public class WebshopSimulation extends Simulation {
 
-    FeederBuilder<String> feeder = csv("products.csv").queue();
+    FeederBuilder<String> feederProducts = csv("products.csv").queue();
     FeederBuilder<String> feederIds = csv("ids.csv").queue();
 
     ChainBuilder getProducts = exec(http("Home")
@@ -22,7 +22,7 @@ public class WebshopSimulation extends Simulation {
     ChainBuilder createProducts = exec(http("Home")
             .get("/"))
             .pause(1)
-            .feed(feeder)
+            .feed(feederProducts)
             .exec(http("Login Request")
                     .post("/LoginAction.action")
                     .formParam("username", "admin")
@@ -59,6 +59,45 @@ public class WebshopSimulation extends Simulation {
                             .queryParam("id", "${id}"))
             .pause(1);
 
+    FeederBuilder<String> feederCategories = csv("categories.csv").queue();
+    FeederBuilder<String> feederCategoryIds = csv("categoryIds.csv").queue();
+
+    ChainBuilder createCategories = exec(http("Home")
+            .get("/"))
+            .pause(1)
+            .feed(feederCategories)
+            .exec(http("Login Request")
+                    .post("/LoginAction.action")
+                    .formParam("username", "admin")
+                    .formParam("password", "admin")
+                    .formParam("method:execute", "login")
+                    .check(header("Set-Cookie").saveAs("authCookie"))
+                    .check(status().is(200)))
+            .exec(addCookie(Cookie("Cookie", "${authCookie}")))
+            .exec(
+                    http("Create Categories")
+                            .post("/AddCategoryAction.action")
+                            .formParam("newCatName", "${newCatName}"))
+            .pause(1);
+
+    ChainBuilder deleteCategories = exec(http("Home")
+            .get("/"))
+            .pause(1)
+            .feed(feederCategoryIds)
+            .exec(http("Login Request")
+                    .post("/LoginAction.action")
+                    .formParam("username", "admin")
+                    .formParam("password", "admin")
+                    .formParam("method:execute", "login")
+                    .check(header("Set-Cookie").saveAs("authCookie"))
+                    .check(status().is(200)))
+            .exec(addCookie(Cookie("Cookie", "${authCookie}")))
+            .exec(
+                    http("Delete Categories")
+                            .post("/DeleteCategoryAction.action")
+                            .queryParam("catId", "${catId}"))
+            .pause(1);
+
     HttpProtocolBuilder httpProtocol = http.baseUrl("http://localhost:8888/EShop-1.0.0")
             .acceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
             .acceptLanguageHeader("en-US,en;q=0.5")
@@ -70,12 +109,19 @@ public class WebshopSimulation extends Simulation {
     ScenarioBuilder getProductsScenario = scenario("Get Products").exec(getProducts);
     ScenarioBuilder deleteProductsScenario = scenario("Delete Products").exec(deleteProducts);
 
+    ScenarioBuilder createCategoriesScenario = scenario("Create Categories").exec(createCategories);
+    ScenarioBuilder deleteCategoriesScenario = scenario("Delete Categories").exec(deleteCategories);
+
     {
         setUp(
+                createCategoriesScenario.injectOpen(rampUsers(50).during(10)),
+
                 createProductsScenario.injectOpen(rampUsers(100).during(10)),
                 getProductsScenario.injectOpen(rampUsers(100).during(10)),
-                deleteProductsScenario.injectOpen(rampUsers(1).during(10))
-            ).protocols(httpProtocol);
+                deleteProductsScenario.injectOpen(rampUsers(100).during(10)),
+
+                deleteCategoriesScenario.injectOpen(rampUsers(50).during(10))
+                ).protocols(httpProtocol);
     }
 
 }
