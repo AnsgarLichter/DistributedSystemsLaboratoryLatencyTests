@@ -8,120 +8,131 @@ import io.gatling.javaapi.http.*;
 
 public class WebshopSimulation extends Simulation {
 
-    FeederBuilder<String> feederProducts = csv("products.csv").queue();
-    FeederBuilder<String> feederIds = csv("ids.csv").queue();
+        FeederBuilder<String> feederProducts = csv("products.csv").queue();
+        FeederBuilder<String> feederIds = csv("ids.csv").queue();
 
-    ChainBuilder getProducts = exec(http("Home")
-            .get("/"))
-            .pause(1)
-            .exec(
-                    http("Get Products")
-                            .get("/listAllProducts.action"))
-            .pause(1);
+        ChainBuilder getProducts = exec(http("Home")
+                        .get("/"))
+                        .pause(1)
+                        .exec(
+                                        http("Get Products")
+                                                        .get("/listAllProducts.action"))
+                        .pause(1);
 
-    ChainBuilder createProducts = exec(http("Home")
-            .get("/"))
-            .pause(1)
-            .feed(feederProducts)
-            .exec(http("Login Request")
-                    .post("/LoginAction.action")
-                    .formParam("username", "admin")
-                    .formParam("password", "admin")
-                    .formParam("method:execute", "login")
-                    .check(header("Set-Cookie").saveAs("authCookie"))
-                    .check(status().is(200)))
-            .exec(addCookie(Cookie("Cookie", "${authCookie}")))
-            .exec(
-                    http("Create Products")
-                            .post("/AddProductAction.action")
-                            .formParam("name", "${name}")
-                            .formParam("price", "${price}")
-                            .formParam("categoryId", "${categoryId}")
-                            .formParam("details", "${details}")
-                            .formParam("method:execute", "Hinzufügen"))
-            .pause(1);
+        ChainBuilder createProducts = exec(http("Home")
+                        .get("/"))
+                        .pause(1)
+                        .feed(feederProducts)
+                        .exec(http("Login Request")
+                                        .post("/LoginAction.action")
+                                        .formParam("username", "admin")
+                                        .formParam("password", "admin")
+                                        .formParam("method:execute", "login")
+                                        .check(header("Set-Cookie").saveAs("authCookie"))
+                                        .check(status().is(200)))
+                        .exec(addCookie(Cookie("Cookie", "${authCookie}")))
+                        .exec(
+                                        repeat(50).on(
+                                                        feed(feederProducts)
+                                                                        .exec(http("Create Products")
+                                                                                        .post("/AddProductAction.action")
+                                                                                        .formParam("name", "${name}")
+                                                                                        .formParam("price", "${price}")
+                                                                                        .formParam("categoryId",
+                                                                                                        "${categoryId}")
+                                                                                        .formParam("details",
+                                                                                                        "${details}")
+                                                                                        .formParam("method:execute",
+                                                                                                        "Hinzufügen"))))
+                        .pause(1);
 
-    ChainBuilder deleteProducts = exec(http("Home")
-            .get("/"))
-            .pause(1)
-            .feed(feederIds)
-            .exec(http("Login Request")
-                    .post("/LoginAction.action")
-                    .formParam("username", "admin")
-                    .formParam("password", "admin")
-                    .formParam("method:execute", "login")
-                    .check(header("Set-Cookie").saveAs("authCookie"))
-                    .check(status().is(200)))
-            .exec(addCookie(Cookie("Cookie", "${authCookie}")))
-            .exec(
-                    http("Delete Products")
-                            .get("/DeleteProductAction.action")
-                            .queryParam("id", "${id}"))
-            .pause(1);
+        ChainBuilder deleteProducts = exec(http("Home")
+                        .get("/"))
+                        .pause(1)
+                        .exec(http("Login Request")
+                                        .post("/LoginAction.action")
+                                        .formParam("username", "admin")
+                                        .formParam("password", "admin")
+                                        .formParam("method:execute", "login")
+                                        .check(header("Set-Cookie").saveAs("authCookie"))
+                                        .check(status().is(200)))
+                        .exec(addCookie(Cookie("Cookie", "${authCookie}")))
+                        .exec(
+                                        repeat(50).on(
+                                                        feed(feederIds)
+                                                                        .exec(http("Delete Products")
+                                                                                        .get("/DeleteProductAction.action")
+                                                                                        .queryParam("id", "${id}"))))
 
-    FeederBuilder<String> feederCategories = csv("categories.csv").queue();
-    FeederBuilder<String> feederCategoryIds = csv("categoryIds.csv").queue();
+                        .pause(1);
 
-    ChainBuilder createCategories = exec(http("Home")
-            .get("/"))
-            .pause(1)
-            .feed(feederCategories)
-            .exec(http("Login Request")
-                    .post("/LoginAction.action")
-                    .formParam("username", "admin")
-                    .formParam("password", "admin")
-                    .formParam("method:execute", "login")
-                    .check(header("Set-Cookie").saveAs("authCookie"))
-                    .check(status().is(200)))
-            .exec(addCookie(Cookie("Cookie", "${authCookie}")))
-            .exec(
-                    http("Create Categories")
-                            .post("/AddCategoryAction.action")
-                            .formParam("newCatName", "${newCatName}"))
-            .pause(1);
+        FeederBuilder<String> feederCategories = csv("categories.csv").queue();
+        FeederBuilder<String> feederCategoryIds = csv("categoryIds.csv").queue();
 
-    ChainBuilder deleteCategories = exec(http("Home")
-            .get("/"))
-            .pause(1)
-            .feed(feederCategoryIds)
-            .exec(http("Login Request")
-                    .post("/LoginAction.action")
-                    .formParam("username", "admin")
-                    .formParam("password", "admin")
-                    .formParam("method:execute", "login")
-                    .check(header("Set-Cookie").saveAs("authCookie"))
-                    .check(status().is(200)))
-            .exec(addCookie(Cookie("Cookie", "${authCookie}")))
-            .exec(
-                    http("Delete Categories")
-                            .post("/DeleteCategoryAction.action")
-                            .queryParam("catId", "${catId}"))
-            .pause(1);
+        ChainBuilder createCategories = exec(http("Home")
+                        .get("/"))
+                        .pause(1)
+                        .exec(http("Login Request")
+                                        .post("/LoginAction.action")
+                                        .formParam("username", "admin")
+                                        .formParam("password", "admin")
+                                        .formParam("method:execute", "login")
+                                        .check(header("Set-Cookie").saveAs("authCookie"))
+                                        .check(status().is(200)))
+                        .exec(addCookie(Cookie("Cookie", "${authCookie}")))
+                        .exec(
+                                        repeat(50).on(
+                                                        feed(feederCategories)
+                                                                        .exec(http("Create Categories")
+                                                                                        .post("/AddCategoryAction.action")
+                                                                                        .formParam("newCatName",
+                                                                                                        "${newCatName}"))))
+                        .pause(1);
 
-    HttpProtocolBuilder httpProtocol = http.baseUrl("http://localhost:8888/EShop-1.0.0")
-            .acceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            .acceptLanguageHeader("en-US,en;q=0.5")
-            .acceptEncodingHeader("gzip, deflate")
-            .userAgentHeader(
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0");
+        ChainBuilder deleteCategories = exec(http("Home")
+                        .get("/"))
+                        .pause(1)
 
-    ScenarioBuilder createProductsScenario = scenario("Create Products").exec(createProducts);
-    ScenarioBuilder getProductsScenario = scenario("Get Products").exec(getProducts);
-    ScenarioBuilder deleteProductsScenario = scenario("Delete Products").exec(deleteProducts);
+                        .exec(http("Login Request")
+                                        .post("/LoginAction.action")
+                                        .formParam("username", "admin")
+                                        .formParam("password", "admin")
+                                        .formParam("method:execute", "login")
+                                        .check(header("Set-Cookie").saveAs("authCookie"))
+                                        .check(status().is(200)))
+                        .exec(addCookie(Cookie("Cookie", "${authCookie}")))
+                        .exec(
+                                        repeat(50).on(
+                                                        feed(feederCategoryIds)
+                                                                        .exec(http("Delete Categories")
+                                                                                        .post("/DeleteCategoryAction.action")
+                                                                                        .queryParam("catId",
+                                                                                                        "${catId}"))))
+                        .pause(1);
 
-    ScenarioBuilder createCategoriesScenario = scenario("Create Categories").exec(createCategories);
-    ScenarioBuilder deleteCategoriesScenario = scenario("Delete Categories").exec(deleteCategories);
+        HttpProtocolBuilder httpProtocol = http.baseUrl("http://localhost:8888/EShop-1.0.0")
+                        .acceptHeader("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                        .acceptLanguageHeader("en-US,en;q=0.5")
+                        .acceptEncodingHeader("gzip, deflate")
+                        .userAgentHeader(
+                                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0");
 
-    {
-        setUp(
-                createCategoriesScenario.injectOpen(rampUsers(1).during(10)),
+        ScenarioBuilder createProductsScenario = scenario("Create Products").exec(createProducts);
+        ScenarioBuilder getProductsScenario = scenario("Get Products").exec(getProducts);
+        ScenarioBuilder deleteProductsScenario = scenario("Delete Products").exec(deleteProducts);
 
-                createProductsScenario.injectOpen(rampUsers(1).during(10)),
-                getProductsScenario.injectOpen(rampUsers(1).during(10)),
-                deleteProductsScenario.injectOpen(rampUsers(1).during(10)),
+        ScenarioBuilder createCategoriesScenario = scenario("Create Categories").exec(createCategories);
+        ScenarioBuilder deleteCategoriesScenario = scenario("Delete Categories").exec(deleteCategories);
 
-                deleteCategoriesScenario.injectOpen(rampUsers(1).during(10))
-                ).protocols(httpProtocol);
-    }
+        {
+                setUp(
+                                // createCategoriesScenario.injectOpen(rampUsers(1).during(10)),
+
+                                // createProductsScenario.injectOpen(rampUsers(1).during(10)),
+                                // getProductsScenario.injectOpen(rampUsers(1).during(10)),
+                                // deleteProductsScenario.injectOpen(rampUsers(1).during(10)),
+
+                                deleteCategoriesScenario.injectOpen(rampUsers(1).during(10))).protocols(httpProtocol);
+        }
 
 }
