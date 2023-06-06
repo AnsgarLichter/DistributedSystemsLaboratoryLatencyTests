@@ -126,13 +126,13 @@ public class WebshopSimulation extends Simulation {
 
         {
                 setUp(
-                                // createCategoriesScenario.injectOpen(rampUsers(1).during(10)),
-
-                                // createProductsScenario.injectOpen(rampUsers(1).during(10)),
-                                // getProductsScenario.injectOpen(rampUsers(1).during(10)),
-                                // deleteProductsScenario.injectOpen(rampUsers(1).during(10)),
-
-                                deleteCategoriesScenario.injectOpen(rampUsers(1).during(10))).protocols(httpProtocol);
+                        createCategoriesScenario.injectOpen(rampUsers(1).during(10)),
+                        createProductsScenario.injectOpen(rampUsers(1).during(10)),
+                        getProductsScenario.injectOpen(rampUsers(1).during(10)),
+                        deleteProductsScenario.injectOpen(rampUsers(1).during(10)),
+                        deleteCategoriesScenario.injectOpen(rampUsers(1).during(10))
+                )
+                        .protocols(httpProtocol);
         }
 
 }
